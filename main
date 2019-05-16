@@ -1,0 +1,244 @@
+import random
+import time
+
+class Card:
+
+    def __init__(self, suit, value):
+        self.suit = suit
+        self.value = value
+
+    def __str__(self):
+        return (f"{self.value} of {self.suit}")
+
+    def __repr__(self):
+        return f"Card('{self.suit}', {self.value})"
+
+    def __eq__(self):
+        return self.suit == other.suit or self.value == other.value
+
+    def __lt__(self):
+        return self.value > other.value
+
+    def print_card(self):
+        if self.value > 9:
+          space = ' '
+        else:
+          space = '  '
+        display=(f" ┌─────────┐\n │ {self.value}{space}     │ \n │         │ \n │         │  \n │    {self.suit}    │ \n │         │ \n │         │ \n │     {space}{self.value} │ \n └─────────┘ ")
+        return display
+
+class Deck:
+
+    def __init__(self, suits=('♥', '♦', '♣', '♠'), value_range=range(1, 11)):
+        """Keyword arguments with default values, which can be overridden."""
+        self.cards = []
+        self.suit_list = suits
+        self.value_range = value_range
+        self.__generate()
+
+    def __str__(self):
+        return str(self.cards)
+
+    def __len__(self):
+        return len(self.cards)
+
+    def __getitem__(self, index):
+        return self.cards[index]
+
+    def __setitem__(self, index, value):
+        self.cards[index] = value
+
+    def __getattr__(self, index):
+        return self.cards[index]
+
+    def __generate(self):
+        for suit in self.suit_list:
+            for value in self.value_range:
+                self.cards.append(Card(suit, value))
+
+    def draw(self):
+        return self.cards.pop(-1)
+
+    def suit1(self):
+        return repr(self.cards[index]).suit
+
+
+class Player:
+
+    def __init__(self, name=None):
+        self.name = name or f"Player {random.randrange(10 ** 4)}"
+        self.hand = []
+        self.card_pile = []
+        self.score = 0
+
+    def __len__(self):
+        return len(self.hand)
+
+    def __getitem__(self, index):
+        return self.hand[index]
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return f"Player(name='{self.name}', hand={self.hand})"
+
+    def draw_card(self):
+        return self.hand.append(deck.draw())
+
+    def play_card(self, index):
+        return self.hand.pop(index)
+  
+
+class GameRunner:
+
+    def __init__(self, players=list()):
+        self.__gen_deck()
+        self.players = players
+        self.turn = 0
+        self.game_num = 1
+        self.table = []
+        self.point_list = {
+
+        1: 11,
+        2: 0,
+        3: 10,
+        4: 0,
+        5: 0,
+        6: 0,
+        7: 0,
+        8: 1,
+        9: 2,
+        10: 3
+        }
+
+    def __gen_deck(self):
+        global deck
+        deck = Deck()
+
+    def start(self):
+          # Determine who goes first
+      if random.randint(1,1) == 1: #CHANGE BACK TO 1,2 TO RANDOMIZE
+        cp_index = 0
+        op_index = 1
+      else:
+        cp_index = 1
+        op_index = 0
+      current_player = self.players[cp_index]
+      other_player = self.players[op_index]
+      print("Welcome to the game.\n")
+      while True:
+        
+        print("Shuffling deck...")
+        random.shuffle(deck)
+        time.sleep(2)
+        print("...done\n")
+        print(f'The briscola is {deck[0]}\n')
+        print(deck[0].print_card())
+        brisc = deck[0].suit
+        briscola = deck[0] 
+
+        # Draw 3 cards
+        for i in range(3):
+            for player in self.players:
+                player.draw_card()
+
+        # Display score
+        for player in self.players:
+            print(f'{player} score: {player.score}')
+
+        #Game loop
+        while True:
+            print(15*"-")
+            if self.turn % 2 == 0 and self.turn != 0 and len(deck) > 0:
+                print('Drawing cards...')
+                print(15 * "-")
+                time.sleep(.5)
+                for player in self.players:
+                    player.draw_card()
+
+            print(f"It is {current_player.name}'s turn\n")
+            self.show_hand(current_player)
+            print(f'The briscola is {briscola}\n')
+            print(deck[0].print_card())
+
+            try:
+                self.play_card(current_player)
+                self.turn += 1
+            except (ValueError, IndexError):
+                print(f"Must be an integer from 1 to {len(player.hand)}")
+            other_player, current_player = current_player, other_player
+
+            #When both players have laid down a card:
+            if len(self.table) == 2:
+              
+# Converting the values to points
+
+                 card1 = self.table[1].value
+                 card2 = self.table[0].value
+                 card1 = self.point_list[card1]
+                 card2 = self.point_list[card2]
+# Hand logic
+                 if (self.table[1].suit == brisc and self.table[0].suit != brisc) or (self.table[1].suit == self.table
+                    [0].suit and card1 > card2):
+                    other_player.card_pile.append(card1+card2)
+                    self.table = []
+                    print(f'{other_player} won the hand\n.')
+                 else:
+                    current_player.card_pile.append(card1+card2)
+                    self.table = []
+                    print(f'{current_player} won the hand\n.')
+            
+            # Checking if both players have no cards then initiate end game
+            if len(self.players[0].hand) == 0 and len(self.players[1].hand) == 0:
+                self.count_points()
+                break
+
+    def show_hand(self, player):
+        print(f"Your hand is:\n")
+        for i, card in enumerate(player.hand): 
+            print(f'{i+1})\n{card.print_card()}')
+
+    def play_card(self, player):
+
+        card_index = int(input("Which card would you like to play?: ")) - 1
+        played_card = player.play_card(card_index)
+        print(f"\nYou played {played_card}\n")
+        self.table.append(played_card)
+        time.sleep(0.5)
+
+    def count_points(self):
+
+        print('END OF GAME.\nCounting points...')
+        time.sleep(1)
+        for player in self.players:
+            points = sum(player.card_pile)
+            print(f'{player} has {points} points')
+            if points > 60:
+                    print(f'{player} wins with {points} points!')
+                    player.score += 1
+                    if current_player != player:
+                      other_player, current_player = current_player, other_player
+            elif points == 60:
+                    print('Tie game!')
+    
+    def PlayerAI(self):
+    
+      if self.turn % 2 == 0 and current_player == self.players[1]:
+        #computer first
+        print('')
+      if self.turn % 2 == 1 and current_player == self.players[1]:
+        #computer second
+        for card in self.players.hand:
+          if (card.value == 1 or card.value == 3) and card.suit == self.table[0].suit:
+            #play card value=1, then value=3
+            print('')
+
+class PlayerAI(Player):
+
+    def __init__(self, difficulty):
+        self.difficulty = difficulty
+
+game = GameRunner(players=[Player("Player1"), Player("Player2")])
+game.start()
+exit()
